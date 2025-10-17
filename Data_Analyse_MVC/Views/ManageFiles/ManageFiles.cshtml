@@ -1,0 +1,36 @@
+﻿@model IEnumerable<Data_Analyse_MVC.Models.UploadFile>
+
+<h2>پنل مدیریت فایل‌ها</h2>
+
+@if (TempData["Message"] != null)
+{
+    <div style="color:green">@TempData["Message"]</div>
+}
+
+@if (TempData["Error"] != null)
+{
+    <div style="color:red">@TempData["Error"]</div>
+}
+
+<table border="1" cellpadding="5">
+    <thead>
+        <tr>
+            <th>نام فایل</th>
+            <th>عملیات</th>
+        </tr>
+    </thead>
+    <tbody>
+        @foreach (var file in Model)
+        {
+            <tr>
+                <td>@file?.OriginalFileName</td>
+                <td>
+                    <form asp-action="StartAnalyse" method="post">
+                        <input type="hidden" name="fileId" value="@file.Id" />
+                        <button type="submit">انتخاب برای تحلیل</button>
+                    </form>
+                </td>
+            </tr>
+        }
+    </tbody>
+</table>
