@@ -22,12 +22,14 @@ namespace Data_Analyse_MVC.Services
             _db = db;
         }
 
-        public async Task AnalyseTextFileAsync(Guid uploadFileId, CancellationToken cancellationToken)
+        public async Task<AnalyseResult?> AnalyseTextFileAsync(Guid uploadFileId, CancellationToken cancellationToken)
         {
-            var file = await _db.UploadFiles.FindAsync(new object[] { uploadFileId }, cancellationToken);
-            if (file == null) return;
 
-            string text = System.Text.Encoding.UTF8.GetString(file.Data);
+
+            var file = await _db.UploadFiles.FindAsync(new object[] { uploadFileId }, cancellationToken);
+            if (file == null) throw new Exception("File not found");
+
+            string text = System.Text.Encoding.UTF8.GetString(file.Data ?? Array.Empty<byte>());
 
 
             text = text.Trim();
@@ -47,87 +49,68 @@ namespace Data_Analyse_MVC.Services
 
 
 
-            int totalwords = words.Length;
-            double avWordLength = words.Length > 0 ? words.Average(w => w.Length) : 0;
-            int totalsentences = sentences.Length;
-            var wordFrequency = new Dictionary<string, int>();
+            int totalWords = words.Length;
+            int totalSentences = sentences.Length;
+            var wordFrequency = words.GroupBy(w => w)
+                         .ToDictionary(g => g.Key, g => g.Count());
 
-            foreach (var word in words)
-            {
-                if (wordFrequency.ContainsKey(word))
-                {
-                    wordFrequency[word]++;
-                }
-                else
-                {
-                    wordFrequency[word] = 1;
-                }
-            }
-            var topWords = wordFrequency.ToList();
-            topWords.Sort((a, b) => b.Value.CompareTo(a.Value));
-            topWords = topWords.Take(10).ToList();
-
-
-            var wordDensity = new Dictionary<string, double>();
+            var topWords = wordFrequency.OrderByDescending(kv => kv.Value)
+                                        .Take(10)
+                                        .ToList();
+            var wordDensity = wordFrequency.ToDictionary(kv => kv.Key, kv => ((double)kv.Value / totalWords) * 100);
 
             foreach (var kv in wordFrequency)
             {
                 string word = kv.Key;
                 int count = kv.Value;
 
-                double density = ((double)count / totalwords) * 100;
+                double density = ((double)count / totalWords) * 100;
                 wordDensity[word] = density;
             }
+            var numericValues = words.Select(w => double.TryParse(w, out double n) ? (double?)n : null)
+                                     .Where(n => n.HasValue)
+                                     .Select(n => n.Value)
+                                     .ToList();
 
-
-
-            var numericValues = new List<double>();
-
-            foreach (var word in words)
+            var numericAnalyse = numericValues.Count > 0 ? new
             {
-                if (double.TryParse(word, out double num))
-                {
-                    numericValues.Add(num);
-                }
-            }
+                TotalNumbers = numericValues.Count,
+                Sum = numericValues.Sum(),
+                Average = numericValues.Average(),
+                Min = numericValues.Min(),
+                Max = numericValues.Max(),
+                Values = numericValues
+            } : null;
 
-            if (numericValues.Count > 0)
+
+            var result = new AnalyseResult
             {
-                double sum = numericValues.Sum();
-                double average = numericValues.Average();
-                double min = numericValues.Min();
-                double max = numericValues.Max();
-                int totalNumbers = numericValues.Count;
-
-                var numericAnalyse = new
+                Id = Guid.NewGuid(),
+                UploadFileId = file.Id,
+                ResultJson = System.Text.Json.JsonSerializer.Serialize(new
                 {
-                    TotalNumbers = totalNumbers,
-                    sum = sum,
-                    Average = average,
-                    Min = min,
-                    Max = max,
-                    Values = numericValues
-                };
-
-                var result = new AnalyseResult
-                {
-                    Id = Guid.NewGuid(),
-                    UploadFileId = file.Id,
-                    ResultJson = System.Text.Json.JsonSerializer.Serialize(new
+                    TextAnalysis = new
                     {
-                        numericAnalyse = numericAnalyse,
-                    }),
+                        TotalWords = totalWords,
+                        TotalSentences = totalSentences,
+                        TopWords = topWords,
+                        WordDensity = wordDensity
+                    },
+                    NumericAnalysis = numericAnalyse
+                }),
+                CreatedAtUtc = DateTime.UtcNow
+            };
 
-                };
-            }
+            _db.AnalyseResults.Add(result);
+            await _db.SaveChangesAsync(cancellationToken);
 
+            return result;
         }
 
-
-        public async Task AnalyseExelFileAsync(Guid uploadFileId, CancellationToken cancellationToken)
+        public async Task<AnalyseResult> AnalyseExelFileAsync(Guid uploadFileId, CancellationToken cancellationToken)
         {
             var file = await _db.UploadFiles.FindAsync(new object[] { uploadFileId }, cancellationToken);
-            if (file == null) return;
+            if (file == null) throw new Exception("File not found");
 
             using (var stream = new MemoryStream(file.Data))
             using (var workbook = new XLWorkbook(stream))
@@ -136,50 +119,61 @@ namespace Data_Analyse_MVC.Services
                 var usedRange = worksheet.RangeUsed();
 
                 var numericValues = new List<double>();
+                var textValues = new List<string>();
 
                 foreach (var row in usedRange.Rows())
                 {
                     foreach (var cell in row.Cells())
                     {
-                        if (double.TryParse(cell.Value.ToString(), out double val))
+                        var cellValue = cell.Value.ToString();
+                        if (double.TryParse(cellValue, out double val))
                         {
                             numericValues.Add(val);
+                        }
+                        else
+                        {
+                            textValues.Add(cellValue);
                         }
                     }
                 }
 
-                if (numericValues.Count == 0) return;
-
-                double sum = numericValues.Sum();
-                double average = numericValues.Average();
-                double min = numericValues.Min();
-                double max = numericValues.Max();
-
-                var exelAnalyse = new
+                // تحلیل عددی
+                var numericAnalyse = numericValues.Count > 0 ? new
                 {
                     TotalNumbers = numericValues.Count,
-                    Sum = sum,
-                    Average = average,
-                    Min = min,
-                    Max = max,
-                    Values = numericValues
-                };
+                    Sum = numericValues.Any() ? numericValues.Sum() : (double?)null,
+                    Average = numericValues.Any() ? numericValues.Average() : (double?)null,
+                    Min = numericValues.Any() ? numericValues.Min() : (double?)null,
+                    Max = numericValues.Any() ? numericValues.Max() : (double?)null,
+                    NumericValues = numericValues,
+                    TotalText = textValues.Count,
+                    TextValues = textValues
+                } : null;
 
+                // ذخیره در دیتابیس
                 var result = new AnalyseResult
                 {
                     Id = Guid.NewGuid(),
                     UploadFileId = file.Id,
                     ResultJson = System.Text.Json.JsonSerializer.Serialize(new
                     {
-                        exelAnalyse = exelAnalyse,
+                        TextAnalysis = new
+                        {
+                            TotalText = textValues.Count,
+                            TextValues = textValues
+                        },
+                        NumericAnalysis = numericAnalyse
                     }),
                     CreatedAtUtc = DateTime.UtcNow
                 };
 
                 _db.AnalyseResults.Add(result);
                 await _db.SaveChangesAsync(cancellationToken);
-            }
 
+                return result;
+            }
         }
+
+
     }
 }

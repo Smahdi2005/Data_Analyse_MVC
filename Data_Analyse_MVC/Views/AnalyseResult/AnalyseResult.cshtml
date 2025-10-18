@@ -1,0 +1,35 @@
+﻿@model Data_Analyse_MVC.Models.AnalyseResult
+@using System.Text.Json
+
+@{
+    ViewData["Title"] = "نتیجه تحلیل فایل";
+    var jsonDoc = JsonDocument.Parse(Model.ResultJson);
+}
+
+<h2>نتیجه تحلیل فایل</h2>
+
+<p><strong>تاریخ تحلیل:</strong> @Model.CreatedAtUtc.ToLocalTime()</p>
+<p><strong>شناسه فایل:</strong> @Model.UploadFileId</p>
+
+<h3>تحلیل عددی</h3>
+
+@if (jsonDoc.RootElement.TryGetProperty("numericAnalyse", out var numericAnalyse) && numericAnalyse.ValueKind != JsonValueKind.Null)
+{
+    <ul>
+        <li><strong>تعداد اعداد:</strong> @numericAnalyse.GetProperty("TotalNumbers").GetInt32()</li>
+        <li><strong>جمع:</strong> @numericAnalyse.GetProperty("Sum").GetDouble()</li>
+        <li><strong>میانگین:</strong> @numericAnalyse.GetProperty("Average").GetDouble()</li>
+        <li><strong>کمینه:</strong> @numericAnalyse.GetProperty("Min").GetDouble()</li>
+        <li><strong>بیشینه:</strong> @numericAnalyse.GetProperty("Max").GetDouble()</li>
+        <li>
+            <strong>مقادیر:</strong>
+            @string.Join(", ", numericAnalyse.GetProperty("Values").EnumerateArray().Select(v => v.GetDouble()))
+        </li>
+    </ul>
+}
+else
+{
+    <p>فایل عددی ندارد یا تحلیلی انجام نشده است.</p>
+}
+
+<a asp-action="ManageFiles" class="btn btn-primary">بازگشت به مدیریت فایل‌ها</a>

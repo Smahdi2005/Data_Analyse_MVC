@@ -1,4 +1,5 @@
 using Data_Analyse_MVC.Models;
+using Data_Analyse_MVC.Services;
 using Microsoft.EntityFrameworkCore;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -7,7 +8,7 @@ var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddControllersWithViews();
 builder.Services.AddDbContext<AppDbContext>(options =>
     options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
-
+builder.Services.AddScoped<IFileAnalyseService, FileAnalyseService>();
 var app = builder.Build();
 
 
@@ -24,6 +25,23 @@ app.UseHttpsRedirection();
 app.UseRouting();
 
 app.UseAuthorization();
+app.MapControllerRoute(
+    name: "uploads",
+    pattern: "File/uploads",
+    defaults: new { controller = "File", action = "uploads" });
+
+
+
+app.MapControllerRoute(
+    name: "ManageFiles",
+    pattern: "File/ManageFiles",
+    defaults: new { controller = "File", action = "ManageFiles" });
+
+app.MapControllerRoute(
+    name: "AnalyseResult",
+    pattern: "File/AnalyseResult",
+    defaults: new { controller = "File", action = "AnalyseResult" });
+
 
 app.MapStaticAssets();
 
