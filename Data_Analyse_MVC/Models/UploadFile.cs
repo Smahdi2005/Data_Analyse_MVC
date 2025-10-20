@@ -19,5 +19,7 @@ namespace Data_Analyse_MVC.Models
 
         public byte[] Data { get; set; } = default!;
 
+        public ICollection<AnalyseResult>? AnalyseResults { get; set; }
+
     }
 }

@@ -1,0 +1,45 @@
+﻿@model IEnumerable<Data_Analyse_MVC.Models.UploadFile>
+
+@{
+    ViewData["Title"] = "مدیریت فایل‌ها";
+}
+
+<h2 class="text-center">📂 مدیریت فایل‌ها</h2>
+
+<!-- پیام موفقیت یا خطا -->
+@if (TempData["Message"] != null)
+{
+    <div style="color:green; margin:10px 0;">@TempData["Message"]</div>
+}
+@if (TempData["Error"] != null)
+{
+    <div style="color:red; margin:10px 0;">@TempData["Error"]</div>
+}
+
+<!-- لیست فایل‌ها -->
+<div id="adminFileListContainer">
+    @await Html.PartialAsync("_AdminFileListPartial", Model)
+</div>
+
+<hr />
+
+<!-- محلی برای نمایش نتیجه تحلیل -->
+<div id="adminAnalyseResultContainer">
+    <h3>📊 نتیجه تحلیل فایل انتخاب‌شده</h3>
+    <div id="analyseResultContent">
+        <!-- نتیجه تحلیل فایل انتخاب‌شده اینجا نمایش داده می‌شود -->
+    </div>
+</div>
+
+@section Scripts {
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script>
+        // ================================
+        // نمایش نتیجه تحلیل فایل
+        function showAdminAnalyseResult(resultId) {
+            $.get("/AnalyseResult/LoadAnalyseResultPartial", { analyseResultId: resultId }, function(html) {
+                $("#analyseResultContent").html(html);
+            });
+        }
+    </script>
+}

@@ -2,18 +2,13 @@
 @using System.Text.Json
 
 @{
-    ViewData["Title"] = "نتیجه تحلیل فایل";
     var jsonDoc = JsonDocument.Parse(Model.ResultJson);
 }
 
-<h2 class="text-center">📊 نتیجه تحلیل فایل</h2>
-
-<p><strong>نام فایل:</strong> @Model.UploadFile.OriginalFileName</p>
+<h4>نتیجه تحلیل فایل: @Model.UploadFile.OriginalFileName</h4>
 <p><strong>تاریخ تحلیل:</strong> @Model.CreatedAtUtc.ToLocalTime()</p>
 
-<hr />
-
-<h4>تحلیل عددی</h4>
+<h5>تحلیل عددی</h5>
 @if (jsonDoc.RootElement.TryGetProperty("NumericAnalysis", out var numericAnalyse) && numericAnalyse.ValueKind != JsonValueKind.Null)
 {
     <ul>
@@ -22,7 +17,9 @@
         <li>میانگین: @numericAnalyse.GetProperty("Average").GetDouble()</li>
         <li>کمینه: @numericAnalyse.GetProperty("Min").GetDouble()</li>
         <li>بیشینه: @numericAnalyse.GetProperty("Max").GetDouble()</li>
-        <li>مقادیر: @string.Join(", ", numericAnalyse.GetProperty("Values").EnumerateArray().Select(v => v.GetDouble()))</li>
+        <li>
+            مقادیر: @string.Join(", ", numericAnalyse.GetProperty("Values").EnumerateArray().Select(v => v.GetDouble()))
+        </li>
     </ul>
 }
 else
@@ -30,14 +27,15 @@ else
     <p>فایل عددی ندارد یا تحلیل انجام نشده است.</p>
 }
 
-<h4>تحلیل متنی</h4>
+<h5>تحلیل متنی</h5>
 @if (jsonDoc.RootElement.TryGetProperty("TextAnalysis", out var textAnalyse) && textAnalyse.ValueKind != JsonValueKind.Null)
 {
     <ul>
         <li>تعداد کلمات: @textAnalyse.GetProperty("TotalWords").GetInt32()</li>
         <li>تعداد جملات: @textAnalyse.GetProperty("TotalSentences").GetInt32()</li>
-        <li>ده کلمه پرتکرار: @string.Join(", ", textAnalyse.GetProperty("TopWords").EnumerateArray().Select(w => w.GetProperty("Key").GetString()))</li>
+        <li>
+            ده کلمه پرتکرار:
+            @string.Join(", ", textAnalyse.GetProperty("TopWords").EnumerateArray().Select(w => w.GetProperty("Key").GetString()))
+        </li>
     </ul>
 }
-
-<a asp-action="ManageFiles" asp-controller="Admin" class="btn btn-primary">بازگشت به مدیریت فایل‌ها</a>

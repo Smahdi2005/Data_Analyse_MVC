@@ -1,0 +1,41 @@
+﻿@model IEnumerable<Data_Analyse_MVC.Models.UploadFile>
+
+<table border="1" cellpadding="5" style="width:100%; border-collapse:collapse;">
+    <thead>
+        <tr style="background-color:#f0f0f0;">
+            <th>نام فایل</th>
+            <th>تاریخ آپلود</th>
+            <th>وضعیت تحلیل</th>
+            <th>عملیات</th>
+        </tr>
+    </thead>
+    <tbody>
+        @if (Model != null && Model.Any())
+        {
+            foreach (var file in Model)
+            {
+                <tr>
+                    <td>@file.OriginalFileName</td>
+                    <td>@file.CreatedAtUtc.ToLocalTime()</td>
+                    <td>
+                        @(file.AnalyseResults != null && file.AnalyseResults.Any() ? "✅ تحلیل شده" : "❌ تحلیل نشده")
+                    </td>
+                    <td>
+                        @if (file.AnalyseResults != null && file.AnalyseResults.Any())
+                        {
+                            <button type="button" onclick="showAdminAnalyseResult('@file.AnalyseResults.Last().Id')">
+                                نمایش نتیجه
+                            </button>
+                        }
+                    </td>
+                </tr>
+            }
+        }
+        else
+        {
+            <tr>
+                <td colspan="4" style="text-align:center; color:gray;">فایلی یافت نشد</td>
+            </tr>
+        }
+    </tbody>
+</table>

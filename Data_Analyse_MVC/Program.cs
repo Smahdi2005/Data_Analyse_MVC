@@ -1,4 +1,4 @@
-using Data_Analyse_MVC.Models;
+﻿using Data_Analyse_MVC.Models;
 using Data_Analyse_MVC.Services;
 using Microsoft.EntityFrameworkCore;
 
@@ -6,6 +6,7 @@ var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
 builder.Services.AddControllersWithViews();
+
 builder.Services.AddDbContext<AppDbContext>(options =>
     options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
 builder.Services.AddScoped<IFileAnalyseService, FileAnalyseService>();
@@ -26,29 +27,50 @@ app.UseRouting();
 
 app.UseAuthorization();
 app.MapControllerRoute(
-    name: "uploads",
-    pattern: "File/uploads",
-    defaults: new { controller = "File", action = "uploads" });
+    name: "Upload",
+    pattern: "Upload",
+    defaults: new { controller = "Upload", action = "Index" }
+);
 
-
+// ============================
+// ✅ روت‌های FileController
+app.MapControllerRoute(
+    name: "StartAnalyse",
+    pattern: "File/StartAnalyse/{fileId?}",
+    defaults: new { controller = "File", action = "StartAnalyse" }
+);
 
 app.MapControllerRoute(
-    name: "ManageFiles",
-    pattern: "File/ManageFiles",
-    defaults: new { controller = "File", action = "ManageFiles" });
+    name: "UserFiles",
+    pattern: "File/UserFiles",
+    defaults: new { controller = "File", action = "UserFiles" }
+);
 
+// ============================
+// ✅ روت‌های AnalyseResultController
 app.MapControllerRoute(
     name: "AnalyseResult",
-    pattern: "File/AnalyseResult",
-    defaults: new { controller = "File", action = "AnalyseResult" });
+    pattern: "AnalyseResult/LoadPartial/{analyseResultId?}",
+    defaults: new { controller = "AnalyseResult", action = "LoadAnalyseResultPartial" }
+);
 
+app.MapControllerRoute(
+    name: "AnalyseResultFull",
+    pattern: "AnalyseResult/View/{analyseResultId?}",
+    defaults: new { controller = "AnalyseResult", action = "AnalyseResult" }
+);
 
-app.MapStaticAssets();
+// ============================
+// ✅ روت‌های AdminController
+app.MapControllerRoute(
+    name: "Admin",
+    pattern: "Admin/ManageFiles",
+    defaults: new { controller = "Admin", action = "ManageFiles" }
+);
 
 app.MapControllerRoute(
     name: "default",
-    pattern: "{controller=Home}/{action=Index}/{id?}")
-    .WithStaticAssets();
-
+    pattern: "{controller=Home}/{action=Index}/{id?}"
+);
 
 app.Run();

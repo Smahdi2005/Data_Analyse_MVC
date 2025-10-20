@@ -1,0 +1,98 @@
+﻿@{
+    ViewData["Title"] = "بارگذاری و تحلیل فایل‌ها";
+}
+
+<h2 class="text-center" dir="rtl">📁 بارگذاری فایل و مشاهده تحلیل</h2>
+
+<!-- نمایش پیام موفقیت یا خطا -->
+<div id="statusMessage" style="margin: 10px 0;"></div>
+
+<!-- فرم آپلود فایل با AJAX -->
+<form id="uploadForm" asp-controller="Upload" asp-action="UploadFileAjax" method="post" enctype="multipart/form-data">
+    @Html.AntiForgeryToken()
+    <div>
+        <input type="file" name="file" id="fileInput" />
+        <button type="submit">📤 آپلود فایل</button>
+    </div>
+</form>
+
+<hr />
+
+<!-- لیست فایل‌های آپلود شده -->
+<div id="fileListContainer">
+    <h3>📄 فایل‌های شما</h3>
+    <div id="userFileList">
+        <!-- اینجا PartialView لود می‌شود -->
+    </div>
+</div>
+
+<hr />
+
+<!-- نمایش نتیجه تحلیل -->
+<div id="analyseResultContainer">
+    <h3>📊 نتیجه تحلیل</h3>
+    <div id="analyseResultContent">
+        <!-- نتیجه تحلیل فایل انتخاب‌شده نمایش داده می‌شود -->
+    </div>
+</div>
+
+@section Scripts {
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+
+    <script>
+        $(document).ready(function () {
+            loadUserFiles(); // وقتی صفحه لود شد، فایل‌ها نمایش داده شوند
+
+            // آپلود فایل با AJAX
+            $("#uploadForm").submit(function (event) {
+                event.preventDefault();
+                var formData = new FormData(this);
+
+                $.ajax({
+                    url: '/Upload/UploadFileAjax',
+                    type: 'POST',
+                    data: formData,
+                    processData: false,
+                    contentType: false,
+                    success: function (response) {
+                        if (response.success) {
+                            $("#statusMessage").html(`<div style="color:green">${response.message}</div>`);
+                            loadUserFiles(); // بروزرسانی لیست فایل‌ها بعد از آپلود
+                        } else {
+                            $("#statusMessage").html(`<div style="color:red">${response.message}</div>`);
+                        }
+                    },
+                    error: function () {
+                        $("#statusMessage").html(`<div style="color:red">خطا در آپلود فایل!</div>`);
+                    }
+                });
+            });
+        });
+
+        // لود PartialView لیست فایل‌ها
+        function loadUserFiles() {
+            $.get("/Upload/GetUserFilesPartial", function (data) {
+                $("#userFileList").html(data);
+            });
+        }
+
+        // شروع تحلیل فایل و نمایش نتیجه
+        function startAnalyse(fileId) {
+            $.post("/File/StartAnalyse", { fileId: fileId }, function (result) {
+                if (result && result.id) {
+                    loadAnalyseResult(result.id);
+                    loadUserFiles(); // بروزرسانی وضعیت فایل
+                } else {
+                    $("#analyseResultContent").html(`<div style="color:red">تحلیل انجام نشد!</div>`);
+                }
+            });
+        }
+
+        // نمایش نتیجه تحلیل فایل
+        function loadAnalyseResult(analyseResultId) {
+            $.get("/AnalyseResult/LoadAnalyseResultPartial", { analyseResultId: analyseResultId }, function (html) {
+                $("#analyseResultContent").html(html);
+            });
+        }
+    </script>
+}
