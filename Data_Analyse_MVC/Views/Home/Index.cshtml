@@ -1,8 +1,53 @@
-﻿@{
-    ViewData["Title"] = "Home Page";
+@{
+    ViewData["Title"] = "خانه";
 }
 
-<div class="text-center">
-    <h1 class="display-4">Welcome</h1>
-    <p>Learn about <a href="https://learn.microsoft.com/aspnet/core">building Web apps with ASP.NET Core</a>.</p>
+<div class="container fade-in">
+    <!-- بخش هدر -->
+    <div class="text-center mb-5">
+        <h1 class="display-4 mb-4">
+            <i class="fas fa-chart-bar text-primary"></i>
+            سامانه تحلیل هوشمند داده
+        </h1>
+        <p class="lead">ابزاری قدرتمند برای تحلیل فایل‌های متنی و عددی</p>
+    </div>
+
+    <!-- بخش ویژگی‌ها -->
+    <div class="row g-4 mb-5">
+        <div class="col-md-4">
+            <div class="card h-100">
+                <div class="card-body text-center">
+                    <i class="fas fa-file-upload fa-3x text-primary mb-3"></i>
+                    <h3 class="card-title h5">آپلود آسان</h3>
+                    <p class="card-text">فایل‌های خود را به راحتی آپلود کنید و نتایج تحلیل را دریافت نمایید.</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card h-100">
+                <div class="card-body text-center">
+                    <i class="fas fa-chart-line fa-3x text-primary mb-3"></i>
+                    <h3 class="card-title h5">تحلیل هوشمند</h3>
+                    <p class="card-text">تحلیل خودکار داده‌های عددی و متنی با الگوریتم‌های پیشرفته.</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card h-100">
+                <div class="card-body text-center">
+                    <i class="fas fa-clock fa-3x text-primary mb-3"></i>
+                    <h3 class="card-title h5">نتایج سریع</h3>
+                    <p class="card-text">دریافت نتایج تحلیل در کمترین زمان ممکن با دقت بالا.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- بخش شروع کار -->
+    <div class="text-center">
+        <h2 class="h3 mb-4">همین حالا شروع کنید</h2>
+        <a asp-controller="Upload" asp-action="Upload" class="btn btn-primary btn-lg">
+            <i class="fas fa-upload me-2"></i>آپلود فایل
+        </a>
+    </div>
 </div>

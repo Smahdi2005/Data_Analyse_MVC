@@ -1,53 +1,127 @@
-﻿@{
+@{
     ViewData["Title"] = "بارگذاری و تحلیل فایل‌ها";
 }
 
-<h2 class="text-center" dir="rtl">📁 بارگذاری فایل و مشاهده تحلیل</h2>
+<div class="container fade-in">
+    <div class="row justify-content-center">
+        <div class="col-md-8">
+            <!-- هدر صفحه -->
+            <div class="text-center mb-5">
+                <h1 class="h2">
+                    <i class="fas fa-cloud-upload-alt text-primary me-2"></i>
+                    بارگذاری و تحلیل فایل
+                </h1>
+                <p class="text-muted">فایل خود را آپلود کنید و نتایج تحلیل را مشاهده نمایید</p>
+            </div>
 
-<!-- نمایش پیام موفقیت یا خطا -->
-<div id="statusMessage" style="margin: 10px 0;"></div>
+            <!-- نمایش پیام -->
+            <div id="statusMessage" class="alert d-none"></div>
 
-<!-- فرم آپلود فایل با AJAX -->
-<form id="uploadForm" asp-controller="Upload" asp-action="UploadFileAjax" method="post" enctype="multipart/form-data">
-    @Html.AntiForgeryToken()
-    <div>
-        <input type="file" name="file" id="fileInput" />
-        <button type="submit">📤 آپلود فایل</button>
-    </div>
-</form>
+            <!-- فرم آپلود -->
+            <div class="card mb-4 shadow-sm">
+                <div class="card-body">
+                    <form id="uploadForm" asp-controller="Upload" asp-action="UploadFileAjax" method="post" enctype="multipart/form-data" class="text-center">
+                        @Html.AntiForgeryToken()
+                        <div class="upload-area p-5 border-2 border-dashed rounded-3 bg-light mb-3">
+                            <i class="fas fa-file-upload fa-3x text-primary mb-3"></i>
+                            <h3 class="h5">فایل خود را اینجا رها کنید</h3>
+                            <p class="text-muted small">یا</p>
+                            <input type="file" name="file" id="fileInput" class="d-none" />
+                            <button type="button" class="btn btn-outline-primary" onclick="document.getElementById('fileInput').click()">
+                                <i class="fas fa-folder-open me-2"></i>انتخاب فایل
+                            </button>
+                            <p class="selected-file mt-2 small text-muted"></p>
+                        </div>
+                        <button type="submit" class="btn btn-primary px-4" disabled>
+                            <i class="fas fa-upload me-2"></i>آپلود و تحلیل
+                        </button>
+                    </form>
+                </div>
+            </div>
 
-<hr />
+            <!-- لیست فایل‌ها -->
+            <div class="card mb-4 shadow-sm">
+                <div class="card-header bg-white py-3">
+                    <h2 class="h5 mb-0">
+                        <i class="fas fa-list text-primary me-2"></i>
+                        فایل‌های شما
+                    </h2>
+                </div>
+                <div class="card-body p-0">
+                    <div id="userFileList" class="table-responsive">
+                        <!-- لیست فایل‌ها اینجا لود می‌شود -->
+                    </div>
+                </div>
+            </div>
 
-<!-- لیست فایل‌های آپلود شده -->
-<div id="fileListContainer">
-    <h3>📄 فایل‌های شما</h3>
-    <div id="userFileList">
-        <!-- اینجا PartialView لود می‌شود -->
-    </div>
-</div>
-
-<hr />
-
-<!-- نمایش نتیجه تحلیل -->
-<div id="analyseResultContainer">
-    <h3>📊 نتیجه تحلیل</h3>
-    <div id="analyseResultContent">
-        <!-- نتیجه تحلیل فایل انتخاب‌شده نمایش داده می‌شود -->
+            <!-- نتایج تحلیل -->
+            <div class="card shadow-sm">
+                <div class="card-header bg-white py-3">
+                    <h2 class="h5 mb-0">
+                        <i class="fas fa-chart-pie text-primary me-2"></i>
+                        نتایج تحلیل
+                    </h2>
+                </div>
+                <div id="analyseResultContent" class="card-body">
+                    <!-- نتایج تحلیل اینجا نمایش داده می‌شود -->
+                </div>
+            </div>
+        </div>
     </div>
 </div>
 
 @section Scripts {
-    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
-
     <script>
         $(document).ready(function () {
-            loadUserFiles(); // وقتی صفحه لود شد، فایل‌ها نمایش داده شوند
+            loadUserFiles();
 
-            // آپلود فایل با AJAX
+            // نمایش نام فایل انتخاب شده
+            $('#fileInput').change(function() {
+                const fileName = this.files[0]?.name;
+                if (fileName) {
+                    $('.selected-file').text(fileName);
+                    $('button[type="submit"]').prop('disabled', false);
+                }
+            });
+
+            // Drag & Drop
+            const uploadArea = $('.upload-area');
+            
+            uploadArea.on('dragover', function(e) {
+                e.preventDefault();
+                $(this).addClass('border-primary');
+            });
+
+            uploadArea.on('dragleave', function(e) {
+                e.preventDefault();
+                $(this).removeClass('border-primary');
+            });
+
+            uploadArea.on('drop', function(e) {
+                e.preventDefault();
+                $(this).removeClass('border-primary');
+                
+                const file = e.originalEvent.dataTransfer.files[0];
+                const fileInput = $('#fileInput')[0];
+                
+                // Create a new FileList object
+                const dataTransfer = new DataTransfer();
+                dataTransfer.items.add(file);
+                fileInput.files = dataTransfer.files;
+                
+                $('.selected-file').text(file.name);
+                $('button[type="submit"]').prop('disabled', false);
+            });
+
+            // فرم آپلود
             $("#uploadForm").submit(function (event) {
                 event.preventDefault();
-                var formData = new FormData(this);
-
+                const formData = new FormData(this);
+                const submitBtn = $(this).find('button[type="submit"]');
+                
+                // غیرفعال کردن دکمه و نمایش لودینگ
+                submitBtn.prop('disabled', true).html('<i class="fas fa-spinner fa-spin me-2"></i>در حال آپلود...');
+                
                 $.ajax({
                     url: '/Upload/UploadFileAjax',
                     type: 'POST',
@@ -55,43 +129,71 @@
                     processData: false,
                     contentType: false,
                     success: function (response) {
+                        const statusDiv = $("#statusMessage");
+                        statusDiv.removeClass('d-none alert-danger alert-success');
+                        
                         if (response.success) {
-                            $("#statusMessage").html(`<div style="color:green">${response.message}</div>`);
-                            loadUserFiles(); // بروزرسانی لیست فایل‌ها بعد از آپلود
+                            statusDiv.addClass('alert-success').html(`
+                                <i class="fas fa-check-circle me-2"></i>${response.message}
+                            `);
+                            loadUserFiles();
+                            // پاک کردن فرم
+                            $('#fileInput').val('');
+                            $('.selected-file').text('');
                         } else {
-                            $("#statusMessage").html(`<div style="color:red">${response.message}</div>`);
+                            statusDiv.addClass('alert-danger').html(`
+                                <i class="fas fa-exclamation-circle me-2"></i>${response.message}
+                            `);
                         }
+                        
+                        // فعال کردن مجدد دکمه
+                        submitBtn.prop('disabled', false).html('<i class="fas fa-upload me-2"></i>آپلود و تحلیل');
                     },
                     error: function () {
-                        $("#statusMessage").html(`<div style="color:red">خطا در آپلود فایل!</div>`);
+                        $("#statusMessage")
+                            .removeClass('d-none')
+                            .addClass('alert-danger')
+                            .html('<i class="fas fa-exclamation-circle me-2"></i>خطا در آپلود فایل!');
+                            
+                        submitBtn.prop('disabled', false).html('<i class="fas fa-upload me-2"></i>آپلود و تحلیل');
                     }
                 });
             });
         });
 
-        // لود PartialView لیست فایل‌ها
         function loadUserFiles() {
+            const fileList = $("#userFileList");
+            fileList.html('<div class="text-center py-4"><i class="fas fa-spinner fa-spin me-2"></i>در حال بارگذاری...</div>');
+            
             $.get("/Upload/GetUserFilesPartial", function (data) {
-                $("#userFileList").html(data);
+                fileList.html(data);
             });
         }
 
-        // شروع تحلیل فایل و نمایش نتیجه
         function startAnalyse(fileId) {
+            const resultContent = $("#analyseResultContent");
+            resultContent.html('<div class="text-center py-4"><i class="fas fa-spinner fa-spin me-2"></i>در حال تحلیل...</div>');
+            
             $.post("/File/StartAnalyse", { fileId: fileId }, function (result) {
                 if (result && result.id) {
                     loadAnalyseResult(result.id);
-                    loadUserFiles(); // بروزرسانی وضعیت فایل
+                    loadUserFiles();
                 } else {
-                    $("#analyseResultContent").html(`<div style="color:red">تحلیل انجام نشد!</div>`);
+                    resultContent.html(`
+                        <div class="alert alert-danger">
+                            <i class="fas fa-exclamation-circle me-2"></i>تحلیل انجام نشد!
+                        </div>
+                    `);
                 }
             });
         }
 
-        // نمایش نتیجه تحلیل فایل
         function loadAnalyseResult(analyseResultId) {
+            const resultContent = $("#analyseResultContent");
+            resultContent.html('<div class="text-center py-4"><i class="fas fa-spinner fa-spin me-2"></i>در حال بارگذاری نتایج...</div>');
+            
             $.get("/AnalyseResult/LoadAnalyseResultPartial", { analyseResultId: analyseResultId }, function (html) {
-                $("#analyseResultContent").html(html);
+                resultContent.html(html);
             });
         }
     </script>

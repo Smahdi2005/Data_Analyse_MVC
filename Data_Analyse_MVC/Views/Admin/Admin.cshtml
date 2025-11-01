@@ -4,42 +4,119 @@
     ViewData["Title"] = "مدیریت فایل‌ها";
 }
 
-<h2 class="text-center">📂 مدیریت فایل‌ها</h2>
+<div class="container fade-in py-4">
+    <div class="row justify-content-center">
+        <div class="col-lg-10">
+            <!-- هدر صفحه -->
+            <div class="text-center mb-5">
+                <h1 class="h2">
+                    <i class="fas fa-cogs text-primary me-2"></i>
+                    مدیریت فایل‌ها
+                </h1>
+                <p class="text-muted">مدیریت و مشاهده تمام فایل‌های آپلود شده و نتایج تحلیل آن‌ها</p>
+            </div>
 
-<!-- پیام موفقیت یا خطا -->
-@if (TempData["Message"] != null)
-{
-    <div style="color:green; margin:10px 0;">@TempData["Message"]</div>
-}
-@if (TempData["Error"] != null)
-{
-    <div style="color:red; margin:10px 0;">@TempData["Error"]</div>
-}
+            <!-- پیام‌های سیستم -->
+            @if (TempData["Message"] != null)
+            {
+                <div class="alert alert-success alert-dismissible fade show" role="alert">
+                    <i class="fas fa-check-circle me-2"></i>
+                    @TempData["Message"]
+                    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                </div>
+            }
+            @if (TempData["Error"] != null)
+            {
+                <div class="alert alert-danger alert-dismissible fade show" role="alert">
+                    <i class="fas fa-exclamation-circle me-2"></i>
+                    @TempData["Error"]
+                    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                </div>
+            }
 
-<!-- لیست فایل‌ها -->
-<div id="adminFileListContainer">
-    @await Html.PartialAsync("_AdminFileListPartial", Model)
-</div>
+            <!-- کارت لیست فایل‌ها -->
+            <div class="card shadow-sm mb-4">
+                <div class="card-header bg-white py-3">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <h2 class="h5 mb-0">
+                            <i class="fas fa-file-alt text-primary me-2"></i>
+                            فایل‌های آپلود شده
+                        </h2>
+                        <div class="btn-group">
+                            <button type="button" class="btn btn-outline-primary btn-sm" onclick="refreshFileList()">
+                                <i class="fas fa-sync-alt me-1"></i>
+                                بروزرسانی
+                            </button>
+                        </div>
+                    </div>
+                </div>
+                <div class="card-body p-0">
+                    <div id="adminFileListContainer">
+                        @await Html.PartialAsync("_AdminFileListPartial", Model)
+                    </div>
+                </div>
+            </div>
 
-<hr />
-
-<!-- محلی برای نمایش نتیجه تحلیل -->
-<div id="adminAnalyseResultContainer">
-    <h3>📊 نتیجه تحلیل فایل انتخاب‌شده</h3>
-    <div id="analyseResultContent">
-        <!-- نتیجه تحلیل فایل انتخاب‌شده اینجا نمایش داده می‌شود -->
+            <!-- کارت نتایج تحلیل -->
+            <div class="card shadow-sm">
+                <div class="card-header bg-white py-3">
+                    <h2 class="h5 mb-0">
+                        <i class="fas fa-chart-pie text-primary me-2"></i>
+                        نتیجه تحلیل فایل انتخاب‌شده
+                    </h2>
+                </div>
+                <div id="analyseResultContent" class="card-body">
+                    <div class="text-center text-muted py-5">
+                        <i class="fas fa-chart-bar fa-3x mb-3"></i>
+                        <p>لطفاً یک فایل را برای مشاهده نتایج تحلیل انتخاب کنید</p>
+                    </div>
+                </div>
+            </div>
+        </div>
     </div>
 </div>
 
 @section Scripts {
-    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
     <script>
-        // ================================
         // نمایش نتیجه تحلیل فایل
         function showAdminAnalyseResult(resultId) {
+            const resultContent = $("#analyseResultContent");
+            resultContent.html('<div class="text-center py-4"><i class="fas fa-spinner fa-spin me-2"></i>در حال بارگذاری نتایج...</div>');
+            
             $.get("/AnalyseResult/LoadAnalyseResultPartial", { analyseResultId: resultId }, function(html) {
-                $("#analyseResultContent").html(html);
+                resultContent.html(html);
+            }).fail(function() {
+                resultContent.html(`
+                    <div class="alert alert-danger m-3">
+                        <i class="fas fa-exclamation-circle me-2"></i>
+                        خطا در بارگذاری نتایج
+                    </div>
+                `);
             });
         }
+
+        // بروزرسانی لیست فایل‌ها
+        function refreshFileList() {
+            const fileList = $("#adminFileListContainer");
+            fileList.html('<div class="text-center py-4"><i class="fas fa-spinner fa-spin me-2"></i>در حال بروزرسانی...</div>');
+            
+            $.get("/Admin/GetFileListPartial", function(html) {
+                fileList.html(html);
+            }).fail(function() {
+                fileList.html(`
+                    <div class="alert alert-danger m-3">
+                        <i class="fas fa-exclamation-circle me-2"></i>
+                        خطا در بروزرسانی لیست فایل‌ها
+                    </div>
+                `);
+            });
+        }
+
+        // حذف پیام‌های سیستم بعد از 5 ثانیه
+        setTimeout(function() {
+            $('.alert').fadeOut('slow', function() {
+                $(this).remove();
+            });
+        }, 5000);
     </script>
 }

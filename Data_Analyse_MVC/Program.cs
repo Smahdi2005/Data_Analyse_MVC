@@ -1,4 +1,4 @@
-﻿using Data_Analyse_MVC.Models;
+using Data_Analyse_MVC.Models;
 using Data_Analyse_MVC.Services;
 using Microsoft.EntityFrameworkCore;
 
@@ -23,6 +23,7 @@ if (!app.Environment.IsDevelopment())
 
 
 app.UseHttpsRedirection();
+app.UseStaticFiles();
 app.UseRouting();
 
 app.UseAuthorization();

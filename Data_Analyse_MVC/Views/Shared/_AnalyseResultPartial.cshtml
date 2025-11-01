@@ -5,37 +5,151 @@
     var jsonDoc = JsonDocument.Parse(Model.ResultJson);
 }
 
-<h4>نتیجه تحلیل فایل: @Model.UploadFile.OriginalFileName</h4>
-<p><strong>تاریخ تحلیل:</strong> @Model.CreatedAtUtc.ToLocalTime()</p>
+<div class="card border-0">
+    <!-- هدر نتیجه -->
+    <div class="card-header bg-transparent border-0 pb-0">
+        <div class="d-flex align-items-center mb-3">
+            <div class="flex-shrink-0">
+                <div class="avatar-sm bg-primary-subtle text-primary rounded-circle">
+                    <i class="fas fa-file-alt"></i>
+                </div>
+            </div>
+            <div class="flex-grow-1 ms-3">
+                <h5 class="mb-1">@Model.UploadFile.OriginalFileName</h5>
+                <p class="text-muted small mb-0">
+                    <i class="fas fa-clock me-1"></i>
+                    @Model.CreatedAtUtc.ToLocalTime().ToString("yyyy/MM/dd HH:mm")
+                </p>
+            </div>
+        </div>
+    </div>
 
-<h5>تحلیل عددی</h5>
-@if (jsonDoc.RootElement.TryGetProperty("NumericAnalysis", out var numericAnalyse) && numericAnalyse.ValueKind != JsonValueKind.Null)
-{
-    <ul>
-        <li>تعداد اعداد: @numericAnalyse.GetProperty("TotalNumbers").GetInt32()</li>
-        <li>جمع: @numericAnalyse.GetProperty("Sum").GetDouble()</li>
-        <li>میانگین: @numericAnalyse.GetProperty("Average").GetDouble()</li>
-        <li>کمینه: @numericAnalyse.GetProperty("Min").GetDouble()</li>
-        <li>بیشینه: @numericAnalyse.GetProperty("Max").GetDouble()</li>
-        <li>
-            مقادیر: @string.Join(", ", numericAnalyse.GetProperty("Values").EnumerateArray().Select(v => v.GetDouble()))
-        </li>
-    </ul>
-}
-else
-{
-    <p>فایل عددی ندارد یا تحلیل انجام نشده است.</p>
-}
+    <div class="card-body">
+        <div class="row g-4">
+            <!-- تحلیل عددی -->
+            <div class="col-md-6">
+                <div class="card h-100 shadow-sm">
+                    <div class="card-header bg-white py-3">
+                        <h6 class="mb-0">
+                            <i class="fas fa-calculator text-primary me-2"></i>
+                            تحلیل عددی
+                        </h6>
+                    </div>
+                    <div class="card-body">
+                        @if (jsonDoc.RootElement.TryGetProperty("NumericAnalysis", out var numericAnalyse) && numericAnalyse.ValueKind != JsonValueKind.Null)
+                        {
+                            <div class="row g-3">
+                                <div class="col-6">
+                                    <div class="border rounded p-3 text-center">
+                                        <div class="text-primary mb-2">
+                                            <i class="fas fa-hashtag fa-lg"></i>
+                                        </div>
+                                        <h6 class="mb-1">تعداد اعداد</h6>
+                                        <h4 class="mb-0">@numericAnalyse.GetProperty("TotalNumbers").GetInt32()</h4>
+                                    </div>
+                                </div>
+                                <div class="col-6">
+                                    <div class="border rounded p-3 text-center">
+                                        <div class="text-primary mb-2">
+                                            <i class="fas fa-plus fa-lg"></i>
+                                        </div>
+                                        <h6 class="mb-1">جمع</h6>
+                                        <h4 class="mb-0">@numericAnalyse.GetProperty("Sum").GetDouble().ToString("N2")</h4>
+                                    </div>
+                                </div>
+                                <div class="col-6">
+                                    <div class="border rounded p-3 text-center">
+                                        <div class="text-primary mb-2">
+                                            <i class="fas fa-equals fa-lg"></i>
+                                        </div>
+                                        <h6 class="mb-1">میانگین</h6>
+                                        <h4 class="mb-0">@numericAnalyse.GetProperty("Average").GetDouble().ToString("N2")</h4>
+                                    </div>
+                                </div>
+                                <div class="col-6">
+                                    <div class="border rounded p-3 text-center">
+                                        <div class="text-primary mb-2">
+                                            <i class="fas fa-chart-line fa-lg"></i>
+                                        </div>
+                                        <h6 class="mb-1">محدوده</h6>
+                                        <h4 class="mb-0">
+                                            <small class="text-muted">@numericAnalyse.GetProperty("Min").GetDouble().ToString("N2")</small>
+                                            <i class="fas fa-arrow-right mx-1 small"></i>
+                                            <small class="text-muted">@numericAnalyse.GetProperty("Max").GetDouble().ToString("N2")</small>
+                                        </h4>
+                                    </div>
+                                </div>
+                            </div>
 
-<h5>تحلیل متنی</h5>
-@if (jsonDoc.RootElement.TryGetProperty("TextAnalysis", out var textAnalyse) && textAnalyse.ValueKind != JsonValueKind.Null)
-{
-    <ul>
-        <li>تعداد کلمات: @textAnalyse.GetProperty("TotalWords").GetInt32()</li>
-        <li>تعداد جملات: @textAnalyse.GetProperty("TotalSentences").GetInt32()</li>
-        <li>
-            ده کلمه پرتکرار:
-            @string.Join(", ", textAnalyse.GetProperty("TopWords").EnumerateArray().Select(w => w.GetProperty("Key").GetString()))
-        </li>
-    </ul>
-}
+                            <div class="mt-4">
+                                <h6 class="mb-3">
+                                    <i class="fas fa-list-ol text-primary me-2"></i>
+                                    مقادیر
+                                </h6>
+                                <div class="bg-light rounded p-3" style="max-height: 150px; overflow-y: auto;">
+                                    @string.Join(", ", numericAnalyse.GetProperty("Values").EnumerateArray().Select(v => v.GetDouble().ToString("N2")))
+                                </div>
+                            </div>
+                        }
+                        else
+                        {
+                            <div class="text-center text-muted py-4">
+                                <i class="fas fa-info-circle fa-2x mb-3"></i>
+                                <p>فایل عددی ندارد یا تحلیل انجام نشده است.</p>
+                            </div>
+                        }
+                    </div>
+                </div>
+            </div>
+
+            <!-- تحلیل متنی -->
+            <div class="col-md-6">
+                <div class="card h-100 shadow-sm">
+                    <div class="card-header bg-white py-3">
+                        <h6 class="mb-0">
+                            <i class="fas fa-font text-primary me-2"></i>
+                            تحلیل متنی
+                        </h6>
+                    </div>
+                    <div class="card-body">
+                        @if (jsonDoc.RootElement.TryGetProperty("TextAnalysis", out var textAnalyse) && textAnalyse.ValueKind != JsonValueKind.Null)
+                        {
+                            <div class="text-center mb-4">
+                                <div class="border rounded p-3 d-inline-block">
+                                    <div class="text-primary mb-2">
+                                        <i class="fas fa-book fa-lg"></i>
+                                    </div>
+                                    <h6 class="mb-1">تعداد کلمات</h6>
+                                    <h4 class="mb-0">@textAnalyse.GetProperty("TotalWords").GetInt32()</h4>
+                                </div>
+                            </div>
+
+                            <div>
+                                <h6 class="mb-3">
+                                    <i class="fas fa-star text-primary me-2"></i>
+                                    کلمات پرتکرار
+                                </h6>
+                                <div class="bg-light rounded p-3">
+                                    @foreach (var word in textAnalyse.GetProperty("TopWords").EnumerateArray())
+                                    {
+                                        <span class="badge bg-white text-dark me-2 mb-2">
+                                            @word.GetProperty("Key").GetString()
+                                            <span class="text-muted ms-1">(@word.GetProperty("Value").GetInt32())</span>
+                                        </span>
+                                    }
+                                </div>
+                            </div>
+                        }
+                        else
+                        {
+                            <div class="text-center text-muted py-4">
+                                <i class="fas fa-info-circle fa-2x mb-3"></i>
+                                <p>فایل متنی ندارد یا تحلیل انجام نشده است.</p>
+                            </div>
+                        }
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
